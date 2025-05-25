@@ -18,24 +18,7 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
-    {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/home",
-      "dest": "/home.html"
-    },
-    {
-      "src": "/tracker",
-      "dest": "/tracker.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
+
   "headers": [
     {
       "source": "/(.*)",
