@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>WerTigo</title>
+
+        <!-- FONT AWESOME -->
+         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" class="stylesheet">
+         <link rel="stylesheet" 
+         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Main CSS-->
+        <link rel="stylesheet" href="css/style.css">
+        <!-- Chat CSS-->
+        <link rel="stylesheet" href="css/custom-chat.css">
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+        <!-- Leaflet JavaScript -->
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        <!-- GraphHopper JavaScript Client -->
+        <script src="https://unpkg.com/graphhopper-js-api-client/dist/graphhopper-client.js"></script>
+        <!-- Flatpickr Date Picker -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+          <!-- JavaScript Files - Load in dependency order -->
+          <!-- Configuration -->
+          <script src="js/config.js"></script>
+          
+          <!-- UI and Animation libraries (may be needed by other scripts) -->
+          <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+          <script src="https://unpkg.com/scrollreveal"></script>
+          
+          <!-- Core UI functionality -->
+          <script src="js/ui-manager.js"></script>
+          <script src="js/animation-manager.js"></script>
+          
+          <!-- Map and trip functionality -->
+          <script src="js/map-manager.js"></script>
+          <script src="js/destination-manager.js"></script>
+          <script src="js/activity-manager.js"></script>
+          <script src="js/planner-manager.js"></script>
+          <script src="js/trip-planner.js"></script>
+          <script src="js/trip-itinerary.js"></script>
+          <script src="js/chat-manager.js"></script>
+
+          <!-- Initialization Coordinator -->
+          <script>
+              // Ensure proper initialization sequence
+              document.addEventListener('DOMContentLoaded', function() {
+                  console.log('DOM loaded, initializing application components...');
+                  
+                  // Step 1: Initialize map first
+                  const mapInitialized = initMap();
+                  console.log('Map initialization result:', mapInitialized);
+                  
+                  // Step 2: Make map functions globally available
+                  if (typeof displayRouteOnMap === 'function' && typeof window.displayRouteOnMap !== 'function') {
+                      window.displayRouteOnMap = displayRouteOnMap;
+                      console.log('Made displayRouteOnMap globally available');
+                  }
+                  
+                  if (typeof geocodeDestination === 'function' && typeof window.geocodeDestination !== 'function') {
+                      window.geocodeDestination = geocodeDestination;
+                      console.log('Made geocodeDestination globally available');
+                  }
+                  
+                  // Step 3: Initialize trip planner components
+                  if (typeof initTripPlanner === 'function') {
+                      console.log('Initializing trip planner...');
+                      initTripPlanner();
+                  } else {
+                      console.error('Trip planner initialization function not found');
+                  }
+                  
+                  // Step 4: Check if map container exists
+                  setTimeout(function() {
+                      const mapElement = document.getElementById('map');
+                      if (mapElement) {
+                          console.log('Map container exists:', mapElement);
+                      } else {
+                          console.error('Map container still not found after initialization');
+                      }
+                  }, 1000);
+              });
+          </script>
+
+          <style>
+              /* Map planner styles */
+              .map-planner {
+                  background-color: white;
+                  border-radius: 12px;
+                  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                  padding: 15px;
+                  margin-top: 15px;
+                  max-width: 820px;
+              }
+          </style>
+    </head>
+    <body class="bdy">
+          
+
+        <section class="index" id="index">
+        <header class="header">
+            <a href="home.html" class="logo" id="menu"><img src="images/LOGO.png" class="log"><span> WerTigo </span></a>
+           
+            <i class="fa-solid fa-bars" id="menu-icon"></i>
+            <nav class="navbar">
+               <a href="home.html" class="active"><span>Home </span></a>
+               <a href="home.html#about"> <span>About us</span></a>
+               <!-- <a href="#services"> <span>Services</span> </a>
+               <a href="#contact"> <span>Contact</span></a> -->
+               <a href="tracker.html"><span>Ticket Tracker</span></a>
+            </nav>
+        </header>
+
+    </section>
+
+
+    <!-- Right Side -->
+
+    
+    <div class="right-panel" id="right-panel">
+        <div class="navigation">
+            
+            <div class="iti">
+        
+            
+            <div id="map" style="height: 600px; width: 820px; margin-top: 20px; z-index: 1; border-radius: 12px; display: block; align-items: center; "></div>
+
+            <!-- Trip Planner Container -->
+            <div id="destination-planner" class="map-planner" style="display: none;">
+              <div class="planner-header">
+                <div class="planner-title">Trip Planner</div>
+                <div class="planner-actions">
+                  <button class="planner-btn" id="save-planner-btn">Save Plan</button>
+                  <button class="planner-btn secondary" id="clear-planner-btn">Clear</button>
+                </div>
+              </div>
+              
+              <div class="itinerary-planner">
+                <h3 class="section-title">My Destinations</h3>
+                <div class="destinations-list" id="destinations-list">
+                  <!-- Destinations will be added here dynamically -->
+                </div>
+                
+                <button class="add-destination-btn" id="add-destination-btn">
+                  <i class="fas fa-plus"></i> Add Destination
+                </button>
+                
+                <!-- Add destination form - initially hidden -->
+                <div class="destination-form" id="destination-form" style="display: none;">
+                  <div class="form-row">
+                    <div class="form-field">
+                      <label for="destination-name">Destination Name</label>
+                      <input type="text" id="destination-name" placeholder="E.g., Museum, Restaurant, etc.">
+                    </div>
+                    <div class="form-field">
+                      <label for="destination-category">Category</label>
+                      <select id="destination-category">
+                        <option value="Cafe">Cafe</option>
+                        <option value="Restaurant">Restaurant</option>
+                        <option value="Accommodation">Accommodation</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Historical">Historical</option>
+                        <option value="Natural">Natural</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-field">
+                      <label for="destination-location">Location</label>
+                      <input type="text" id="destination-location" placeholder="E.g., Downtown, Street name, etc.">
+                    </div>
+                    <div class="form-field">
+                      <label for="destination-budget">Budget (₱)</label>
+                      <input type="number" id="destination-budget" placeholder="Estimated cost" min="0">
+                    </div>
+                  </div>
+                  
+                  <div class="form-field">
+                    <label for="destination-day">Day (optional)</label>
+                    <input type="number" id="destination-day" min="1" placeholder="e.g., 1">
+                  </div>
+                  
+                  <div class="form-field">
+                    <label for="destination-notes">Notes</label>
+                    <textarea id="destination-notes" placeholder="Additional details about this destination..."></textarea>
+                  </div>
+
+                  <!-- Add image preview section -->
+                  <div class="form-field">
+                    <label>Destination Image</label>
+                    <div class="image-preview" id="destination-image-preview">
+                      <img src="" alt="Destination preview" id="preview-image" style="display: none; max-width: 100%; height: auto; border-radius: 8px;">
+                      <div class="no-image" id="no-image-message">No image available</div>
+                    </div>
+                  </div>
+                  
+                  <div class="form-actions">
+                    <button class="planner-btn secondary" id="cancel-destination-btn">Cancel</button>
+                    <button class="planner-btn" id="save-destination-btn">Save Destination</button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="summary-section">
+                <div class="summary-title">Trip Summary</div>
+                <div class="summary-stats">
+                  <div class="stat-item">
+                    <div class="stat-value" id="trip-destinations-count">0</div>
+                    <div class="stat-label">Destinations</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value" id="trip-budget">₱0</div>
+                    <div class="stat-label">Est. Budget</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+          <br>
+            <div class="des">
+            <!-- <img src="images/PICNIC.jpg" height="100px" width="100px" class="dest">
+            <img src="images/SKY.jpg" height="100px" width="100px" class="dest"> -->
+            </div>
+            <!-- <br>
+            <br>
+            <br>
+            
+            <p>Day 1</p>
+            <p>------------------------------------</p>
+            <br>
+            <p>Picnic grove-----P50</p>
+            <br>
+            <p>Sky Ranch-------P300-P500</p>
+            <br>
+            <p>Total:    P550</p> -->
+            </div>
+            <!--
+            <div class="right-links">
+                <a href="#" class="link">For Partners</a>
+                <span class="link">PHP</span>
+                <button class="sign-up-btn">Sign up to save</button>
+            </div>
+        </div>
+        
+        <div class="right-panel-content">
+            <h1 class="heading">YOUR TRAVEL AI GENIUS</h1>
+            <p class="subheading">Got a vacation coming up? Start here by asking me anything about it.</p>
+            
+            <div class="slider-navigation">
+                <span class="arrow-icon">?</span>
+                <div class="slider-dots">
+                    <div class="dot"></div>
+                    <div class="dot active"></div>
+                    <div class="dot"></div> 
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+-->
+
+<!--Left Panel-->
+        <div class="chat-button" id="chatButton">
+            <i class="fas fa-comments"></i>
+        </div>
+    
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-header" id="chatHeader">
+                <div class="chat-header-info">
+                    <div class="logo">WerTigo</div>
+                    <div class="tagline">Now what is your plan?</div>
+                </div>
+                <!-- <div class="chat-header-actions">
+                    <button class="header-button" id="minimizeButton">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="header-button" id="closeButton">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                -->
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-avatar">
+                    </div>
+                    <div class="message-content">
+                        Awesome! Let's get this travel party started! <br><br>
+                        To whip up your perfect trip, I just need a few details:
+                        <ol class="numbered-list">
+                            <li>Destination: <span>Where are we heading?</span></li>
+                            <li>Travel Dates: <span>When are you planning to go?</span></li>
+                            <li>Number of Travelers: <span>How many people are joining the fun?</span></li>
+                            <li>Budget: <span>Got a budget in mind?</span></li>
+                            <li>Interests: <span>Any specific activities or experiences you want to include? (e.g., adventure, relaxation, culture, food, etc.)</span></li>
+                        </ol>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <button class="create-trip-btn" id="createTripBtn">
+                create a new trip
+            </button>
+            
+            <div class="chat-input-container">
+                <div class="chat-input">
+                    <input type="text" id="userInput" placeholder="Ask anything, the more you share the better I can help..." />
+                    <button class="send-button" id="sendButton">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="quick-replies">
+                      <!-- Quick reply buttons have been removed -->
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

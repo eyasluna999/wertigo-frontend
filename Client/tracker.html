@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>WerTigo - Ticket Tracker</title>
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" class="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Main CSS-->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Tracker CSS -->
+    <link rel="stylesheet" href="css/tracker.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <style>
+            .place-number-tooltip {
+                background-color: transparent;
+                border: none;
+                box-shadow: none;
+                font-weight: bold;
+                color: white;
+                text-shadow: 1px 1px 1px rgba(0,0,0,0.7);
+            }
+            .loading-tickets {
+                text-align: center;
+                padding: 20px;
+                color: #ccc;
+            }
+            .loading-tickets i {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+            .view-on-map-btn {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 10px;
+                margin-top: 8px;
+                cursor: pointer;
+                font-size: 0.8rem;
+                transition: background-color 0.2s;
+            }
+            .view-on-map-btn:hover {
+                background-color: #2980b9;
+            }
+            .created-date {
+                font-size: 0.8rem;
+                color: #777;
+                margin-top: 5px;
+                text-align: right;
+            }
+            /* Route button styling */
+            .view-route-btn, .complete-route-btn {
+                background-color: #27ae60;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                margin-top: 15px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                transition: background-color 0.2s;
+            }
+            .view-route-btn:hover, .complete-route-btn:hover {
+                background-color: #219653;
+            }
+            .complete-route-container {
+                margin-bottom: 20px;
+                margin-top: 10px;
+                display: flex;
+                justify-content: center;
+            }
+            .complete-route-btn {
+                background-color: #8e44ad;
+            }
+            .complete-route-btn:hover {
+                background-color: #7d3c98;
+            }
+            .route-control {
+                padding: 8px;
+                background-color: white;
+                border-radius: 4px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+            .route-control-btn {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 0.9rem;
+                transition: background-color 0.2s;
+            }
+            .route-control-btn:hover {
+                background-color: #2980b9;
+            }
+            .route-info-container {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                background-color: white;
+                border-radius: 4px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                z-index: 1000;
+                overflow: hidden;
+                max-width: 300px;
+            }
+            .route-info-header {
+                background-color: #3498db;
+                color: white;
+                padding: 8px 12px;
+                font-weight: 500;
+                font-size: 1rem;
+            }
+            .route-info-content {
+                padding: 10px;
+            }
+            .route-info-item {
+                margin-bottom: 5px;
+                font-size: 0.9rem;
+            }
+            .route-info-item i {
+                color: #3498db;
+                margin-right: 5px;
+            }
+            .route-info-close {
+                text-align: right;
+                margin-top: 10px;
+            }
+            .route-info-close button {
+                background: none;
+                border: none;
+                color: #7f8c8d;
+                cursor: pointer;
+                padding: 5px;
+                border-radius: 50%;
+                transition: background-color 0.2s;
+            }
+            .route-info-close button:hover {
+                background-color: #ecf0f1;
+                color: #34495e;
+            }
+            @media print {
+                .tracker-form, .header, .action-buttons, 
+                .route-control, .route-info-container, 
+                .view-route-btn, .complete-route-btn, 
+                .complete-route-container {
+                    display: none !important;
+                }
+                .results-container {
+                    box-shadow: none;
+                    border: none;
+                }
+                body, .bdy {
+                    background: white !important;
+                    padding: 0 !important;
+                }
+                .tracker-section {
+                    padding: 0 !important;
+                    background: white !important;
+                }
+            }
+
+        /* Ticket Cards Styling */
+        .ticket-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .ticket-card-header {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ticket-card-id {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .ticket-card-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-completed {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .status-cancelled {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .ticket-card-content {
+            padding: 16px;
+        }
+        
+        .ticket-card-content > div {
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+        
+        .ticket-card-content i {
+            width: 20px;
+            color: #7f8c8d;
+            margin-right: 8px;
+        }
+        
+        .ticket-card-actions {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: right;
+        }
+        
+        .view-details-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .view-details-btn:hover {
+            background: #2980b9;
+        }
+        
+        .no-tickets {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+        
+        .no-tickets i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="bdy">
+    <header class="header">
+        <a href="index.html" class="logo" id="menu"><img src="images/LOGO.png" class="log"><span> WerTigo </span></a>
+       
+        <i class="fa-solid fa-bars" id="menu-icon"></i>
+        <nav class="navbar">
+           <a href="home.html"><span>Home </span></a>
+           <a href="home.html#about"> <span>About us</span></a>
+           <a href="index.html"> <span>Wertigo AI</span> </a>
+        </nav>
+    </header>
+
+    <section class="tracker-section">
+        <h2 class="tracker-title">Travel Ticket Tracker</h2>
+        
+        <div class="tracker-container">
+            <div class="tracker-form">
+                <h2>Track Your Ticket</h2>
+                <p>Enter your ticket ID to view your travel details and status.</p>
+                
+                <div class="form-group">
+                    <label for="ticketIdInput">Ticket ID</label>
+                    <input type="text" id="ticketIdInput" placeholder="Enter your ticket ID (e.g., WTO-ABC123)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="emailInput">Email Address (optional)</label>
+                    <input type="email" id="emailInput" placeholder="Enter your email">
+                </div>
+                
+                <button class="tracker-btn" id="searchButton">
+                    <i class="fas fa-search"></i> Track Ticket
+                </button>
+                
+                <div class="status-message error" id="errorMessage"></div>
+                <div class="status-message success" id="successMessage"></div>
+                
+                <div class="form-group form-group-mt">
+                    <h3>Find All Your Tickets</h3>
+                    <label for="emailListInput">Email Address</label>
+                    <input type="email" id="emailListInput" placeholder="Enter your email address">
+                </div>
+                
+                <button class="tracker-btn" id="listButton">
+                    <i class="fas fa-list"></i> View All Tickets
+                </button>
+                
+                <div class="status-message error" id="listErrorMessage"></div>
+            </div>
+            
+            <div class="results-container">
+                <div id="ticketList">
+                    <h3>Your Travel Tickets</h3>
+                    <div id="ticketCards"></div>
+                </div>
+                
+                <div id="ticketDetails">
+                    <div class="ticket-header">
+                        <div class="ticket-id" id="displayTicketId">WTO-ABC123</div>
+                        <div class="ticket-status status-active" id="displayStatus">Active</div>
+                    </div>
+                    
+                    <div class="ticket-info">
+                        <div class="info-item">
+                            <div class="info-label">Destination</div>
+                            <div class="info-value" id="displayDestination">Palawan, Philippines</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Travel Dates</div>
+                            <div class="info-value" id="displayDates">Jun 15, 2023 - Jun 20, 2023</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Number of Travelers</div>
+                            <div class="info-value" id="displayTravelers">2</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Budget</div>
+                            <div class="info-value" id="displayBudget">₱15,000</div>
+                        </div>
+                    </div>
+                    
+                    <div id="mapContainer" class="map-container" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
+                    
+                    <h3 class="itinerary-heading">Itinerary</h3>
+                    <div id="itineraryContainer">
+                        <!-- Itinerary content will be populated here -->
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="action-button print-button" id="printButton">
+                            <i class="fas fa-print"></i> Print Ticket
+                        </button>
+                        <button class="action-button delete-button" id="deleteButton">
+                            <i class="fas fa-trash-alt"></i> Delete Ticket
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="no-results" id="noResults">
+                    <i class="fas fa-ticket-alt"></i>
+                    <p>Enter your ticket ID or email address to track your travel plans.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <!-- Tracker JavaScript -->
+    <script src="js/tracker.js"></script>
+</body>
+</html> 

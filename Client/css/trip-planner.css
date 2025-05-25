@@ -1,0 +1,131 @@
+.routing-section {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.routing-section h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.routing-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.route-points {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.route-start, .route-end {
+  flex: 1;
+  min-width: 200px;
+}
+
+.route-start label, .route-end label {
+  display: block;
+  margin-bottom: 5px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.route-start select, .route-end select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.route-waypoints {
+  margin-top: 10px;
+}
+
+.route-waypoints label {
+  display: block;
+  margin-bottom: 5px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+#waypoints-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.waypoint-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.waypoint-item input[type="checkbox"] {
+  margin: 0;
+}
+
+.calculate-route-btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.calculate-route-btn:hover {
+  background: #0056b3;
+}
+
+.calculate-route-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.route-results {
+  margin-top: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.route-summary {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.route-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+}
+
+.route-detail i {
+  color: #007bff;
+}
+
+#route-distance, #route-time {
+  font-weight: bold;
+  color: #333;
+} 
